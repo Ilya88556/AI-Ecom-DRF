@@ -1,0 +1,87 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:16
+    restart: always
+    env_file:
+      - env.env
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7
+    restart: always
+    ports:
+      - "6379:6379"
+
+  backend:
+    build: .
+    env_file:
+      - env.env
+    command: >
+      sh -c "
+        until pg_isready -h $${DB_HOST} -p $${DB_PORT}; do
+          echo '⏳ waiting for postgres...'; sleep 1;
+        done &&
+        python manage.py migrate --noinput &&
+        python manage.py collectstatic --noinput &&
+        touch /tmp/migrated &&                                  \
+        gunicorn ecom_drf_v1.wsgi:application -b 0.0.0.0:8000
+      "
+
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -h $${DB_HOST} -p $${DB_PORT}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+    depends_on:
+      db:
+        condition: service_started
+      redis:
+        condition: service_started
+    ports:
+      - "8000:8000"
+
+  celery:
+    build: .
+    env_file:
+      - env.env
+    command: >
+      sh -c "
+        until nc -z $$DB_HOST $$DB_PORT; do sleep 1; done &&
+        celery -A ecom_drf_v1 worker -l info
+      "
+    depends_on:
+      db:
+        condition: service_started
+      redis:
+        condition: service_started
+      backend:
+        condition: service_healthy
+
+  celery-beat:
+    build: .
+    env_file:
+      - env.env
+    command: >
+      sh -c "
+        until pg_isready -h $${DB_HOST} -p $${DB_PORT}; do
+          echo '⏳ waiting for postgres…'; sleep 2;
+        done &&
+        celery -A ecom_drf_v1 beat -l info \
+              --scheduler django_celery_beat.schedulers:DatabaseScheduler
+      "
+    depends_on:
+      db:
+        condition: service_started
+      redis:
+        condition: service_started
+      backend:
+        condition: service_healthy
+
+volumes:
+  pg_data:
