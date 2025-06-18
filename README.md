@@ -3,7 +3,7 @@
 </h1>
 
 <p align="center">
-  <img src="https://img.shields.io/github/actions/workflow/status/Viom852/llm-shop-drf-backend/ci.yml?label=CI&logo=github" />
+  <img src="https://img.shields.io/github/actions/workflow/status/Ilya88556/AI-Ecom-DRF/ci.yml?label=CI&logo=github" />
   <img src="https://img.shields.io/badge/Coverage-96%25-brightgreen" />
   <img src="https://img.shields.io/badge/Python-3.12-blue" />
   <img src="https://img.shields.io/badge/Deploy-Local--Docker-blue" />
@@ -112,8 +112,8 @@ This section contains the **Docker-based setup instructions**.
 - ## 🚀 Clone the repository
 
   ~~~bash
-  git clone 
-  cd llm-shop-drf-backend
+  git clone https://github.com/Ilya88556/AI-Ecom-DRF.git
+  cd AI-Ecom-DRF
   ~~~
 
 - ## 🔑 Setup environment variables
